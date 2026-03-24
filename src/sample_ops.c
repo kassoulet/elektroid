@@ -148,6 +148,11 @@ sample_ops_detect_start (struct idata *sample)
 
   // Search audio data
   data = sample->content->data;
+  /*
+   * ⚡ BOLT OPTIMIZATION: Moved threshold calculation out of the nested loop.
+   */
+  gfloat threshold = float_mode ? SAMPLE_OPS_SILENCE_THRESHOLD :
+    SHRT_MAX * SAMPLE_OPS_SILENCE_THRESHOLD;
   for (guint32 i = 0; i < sample_info->frames; i++)
     {
       for (gint j = 0; j < sample_info->channels; j++)
@@ -156,13 +161,12 @@ sample_ops_detect_start (struct idata *sample)
 	  if (float_mode)
 	    {
 	      gfloat v = *((gfloat *) data);
-	      above_threshold = fabsf (v) >= SAMPLE_OPS_SILENCE_THRESHOLD;
+	      above_threshold = fabsf (v) >= threshold;
 	    }
 	  else
 	    {
 	      gint16 v = *((gint16 *) data);
-	      above_threshold =
-		fabsf (v) >= SHRT_MAX * SAMPLE_OPS_SILENCE_THRESHOLD;
+	      above_threshold = fabsf (v) >= threshold;
 	    }
 	  if (above_threshold)
 	    {
