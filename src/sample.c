@@ -981,7 +981,7 @@ sample_load_libsndfile (void *data, SF_VIRTUAL_IO *sf_virtual_io,
       buffer_output = src_data.data_out;
     }
 
-  src_state = src_new (SRC_SINC_BEST_QUALITY, sample_info->channels, &err);
+  src_state = src_new (SRC_SINC_MEDIUM_QUALITY, sample_info->channels, &err);
   if (err)
     {
       error_print ("Error while creating the resampler: %s",
