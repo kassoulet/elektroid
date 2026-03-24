@@ -251,68 +251,48 @@ elektroid_update_midi_status ()
 static void
 elektroid_update_backend_status ()
 {
-  gchar *status;
-  gchar *statfss_str;
   struct backend_storage_stats statfs;
-  GString *statfss;
+  GString *status;
 
   if (backend_check (BACKEND))
     {
-      statfss = g_string_new (NULL);
-      if (BACKEND->get_storage_stats)
-	{
-	  for (guint i = 1; i < G_MAXUINT8; i <<= 1)
-	    {
-	      gint v = BACKEND->get_storage_stats (BACKEND, i, &statfs,
-						   remote_browser.dir);
-	      if (v >= 0)
-		{
-		  g_string_append_printf (statfss, " %s %.2f%%", statfs.name,
-					  backend_get_storage_stats_percent
-					  (&statfs));
-		}
-
-	      if (!v)
-		{
-		  break;
-		}
-	    }
-	}
-
-      statfss_str = g_string_free (statfss, FALSE);
-      status = g_malloc (LABEL_MAX);
+      status = g_string_new (NULL);
 
       if (strlen (BACKEND->name))
 	{
-	  snprintf (status, LABEL_MAX, "%s", BACKEND->name);
+	  g_string_append (status, BACKEND->name);
 	  if (*BACKEND->version)
 	    {
-	      strncat (status, " ", LABEL_MAX - sizeof (status) - 2);
-	      strncat (status, BACKEND->version,
-		       LABEL_MAX - sizeof (status) -
-		       strlen (BACKEND->version) - 1);
+	      g_string_append_printf (status, " %s", BACKEND->version);
 	    }
 	  if (*BACKEND->description)
 	    {
-	      strncat (status, " (", LABEL_MAX - sizeof (status) - 3);
-	      strncat (status, BACKEND->description,
-		       LABEL_MAX - sizeof (status) -
-		       strlen (BACKEND->description) - 1);
-	      strncat (status, ")", LABEL_MAX - sizeof (status) - 2);
+	      g_string_append_printf (status, " (%s)", BACKEND->description);
 	    }
-	  if (statfss_str)
+
+	  if (BACKEND->get_storage_stats)
 	    {
-	      strncat (status, statfss_str,
-		       sizeof (status) - strlen (statfss_str) - 1);
+	      for (guint i = 1; i < G_MAXUINT8; i <<= 1)
+		{
+		  gint v = BACKEND->get_storage_stats (BACKEND, i, &statfs,
+						       remote_browser.dir);
+		  if (v >= 0)
+		    {
+		      g_string_append_printf (status, " %s %.2f%%", statfs.name,
+					      backend_get_storage_stats_percent
+					      (&statfs));
+		    }
+
+		  if (!v)
+		    {
+		      break;
+		    }
+		}
 	    }
 	}
-      else
-	{
-	  status[0] = 0;
-	}
-      gtk_label_set_text (backend_status_label, status);
-      g_free (status);
-      g_free (statfss_str);
+
+      gtk_label_set_text (backend_status_label, status->str);
+      g_string_free (status, TRUE);
     }
   else
     {
